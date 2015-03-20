@@ -7,4 +7,7 @@
  * @author Stephan Jamieson
  * @version 8/3/15
  */
-public interface Kernel extends SystemCall, InterruptHandler { }
+public interface Kernel extends SystemCall, InterruptHandler {
+
+	
+ }

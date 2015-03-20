@@ -1,11 +1,32 @@
 public class Process implements ProcessControlBlock{
-	 enum State { WAITING, READY, RUNNING, TERMINATED };
+	
+/**
+ * Abstract Description of Process Control Block used by kernel and simulator.
+ * 
+ * @author Stephan Jamieson
+ * @version 8/3/15
+ */
+
+
+    /**
+     * Possible process states.
+     */
+    //enum State { WAITING, READY, RUNNING, TERMINATED };
 
     /**
      * Obtain process ID.
      */
-    int getPID(){
+	int ID;
+	String name;
+	State state;
+
+	public Process(int ID, String name ){
+		this.ID = ID; 
+		this.name = name;
 		
+	}
+    int getPID(){
+		return ID;
 	}
 
     /**
@@ -13,14 +34,14 @@ public class Process implements ProcessControlBlock{
      * 
      */
     String getProgramName(){
-		
+		return name;
 	}
     
 
     /**
      * Obtain current program 'instruction'.
      */
-    Instruction getInstruction(){	
+    Instruction getInstruction(){
 		
 	}
     
@@ -36,7 +57,7 @@ public class Process implements ProcessControlBlock{
      * Obtain process state.
      */
     State getState(){
-		
+		return state;
 	}
     
     /**
@@ -44,7 +65,9 @@ public class Process implements ProcessControlBlock{
      * Requires <code>getState()!=State.TERMINATED</code>.
      */
     void setState(State state){
-
+		this.state = state;
 	}
+
+	
 	
 }

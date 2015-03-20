@@ -12,7 +12,7 @@ public class SystemTimerImpl  {
      * Time cost of a system call.
      */
     final static int SYSCALL_COST = 2;
-	 long systemTime = 0, userTime = 0;
+	 long systemTime = 0, userTime = 0, kernelTime =0;
 	
 	
     
@@ -27,18 +27,21 @@ public class SystemTimerImpl  {
      * Obtain the amount of time the CPU has been idle.
      */
     long getIdleTime(){
+		
 	}
 
     /**
      * Obtain the amount of time the system has spent executing in user space.
      */
     long getUserTime(){
+		return userTime;
 	}
 
     /**
      * Obtain the amount of time the system has spent executing in kernel space.
      */
     long getKernelTime(){
+		return kernelTime;
 		
 	}
 
@@ -53,12 +56,14 @@ public class SystemTimerImpl  {
      * Advance system time by the given amount.
      */
     void advanceSystemTime(long time){
+		systemTime += time;
 	}
     
     /**
      * Advance user time and system time by the given amount.
      */
     void advanceUserTime(long time){
+		userTime += time;
 	
 	}
     
@@ -66,6 +71,7 @@ public class SystemTimerImpl  {
      * Advance kernel time and system time by the given amount.
      */
     void advanceKernelTime(long time){
+		kernelTime+= time;
 	}
     
     /**

@@ -1,3 +1,4 @@
+import java.
 public class CPUImpl implements CPU{
 
 	ProcessControlBlock currP;
@@ -7,13 +8,16 @@ public class CPUImpl implements CPU{
     int execute(int timeUnits){
 	
 		int required = currP.getInstruction().getBurstRemaining();
+		int used = Math.min(required, timeUnits);
+		Simulation.timer.advanceSystemTime(used);
+		Simulation.timer.advanceUserTime(used);
 		if(required< timeUnits){
 			return (timeUnits - required);
 		}else{
 			return 0;
 		}
-	//update systemtimer.
-
+	
+		
 	}
     
     /**
@@ -36,7 +40,7 @@ public class CPUImpl implements CPU{
      * Determine whether the CPU is idle (<code>currentProcess()==null</code>).
      */
     boolean isIdle(){
-	return currentProcess()==null; 
+	return (currentProcess()==null); 
 
 	}
 }

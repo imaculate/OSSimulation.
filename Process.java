@@ -43,6 +43,7 @@ public class Process implements ProcessControlBlock{
      */
     Instruction getInstruction(){
 		
+		
 	}
     
     
@@ -65,8 +66,11 @@ public class Process implements ProcessControlBlock{
      * Requires <code>getState()!=State.TERMINATED</code>.
      */
     void setState(State state){
-		this.state = state;
-	}
+		if(getState()!=State.TERMINATED){
+	
+			this.state = state;
+			}
+		}
 
 	
 	

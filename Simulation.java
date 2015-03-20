@@ -4,6 +4,7 @@ public class Simulation{
 
 		int slicelength =  Integer.parseInt(arg[1]);
 		int overhead = Integer.parseInt(args[2]);
+		static SystemTimerImpl timer = new SystemTimer();
 	
 		
         try 
@@ -15,6 +16,7 @@ public class Simulation{
             Scanner in = new Scanner(file);
 			
 		EventQueue queue = new EventQueue();
+
             
             // Read each line until end of file is reached
             while (in.hasNextLine())
@@ -34,10 +36,16 @@ public class Simulation{
 			
 		}
 		//setting systemtimer to zero.
-		SystemTimerImpl timer = new SystemTimer();
+	}
 		timer.setSystemTime(0);
+		CPUImpl  cpu = new CPUImpl();
+		
+		
 
-		while(!queue.isEmpty() && ){
+		while(!queue.isEmpty() && cpu.isIdle() ){
+			
+			
+			
 		}
 
 		

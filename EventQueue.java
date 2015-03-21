@@ -1,5 +1,6 @@
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.*;
 /**
  * Ordered Event queue for discrete event simulator.
  * Queue ordered by event time. 
@@ -45,4 +46,20 @@ public class EventQueue {
      * Determine if queue is empty.
      */
     public boolean isEmpty() { return queue.isEmpty(); }
+    
+    public boolean removeTimeOut(Process p){
+      Iterator<Event> i = queue.iterator();
+      while(i.hasNext()){
+         Event e = i.next();
+         if((e.getClass()== TimeOutEvent.class) && (((Process)((TimeOutEvent)e).getProcess()).getID() == p.getID())){
+           queue.remove(e);
+           return true;
+            
+         }
+            
+      }
+
+    
+      return false;
+    }
 }

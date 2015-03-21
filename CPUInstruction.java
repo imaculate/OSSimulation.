@@ -10,11 +10,21 @@ public class CPUInstruction extends Instruction {
 
     private int burstRemaining;
     
-    public CPUInstruction(int duration, ProcessControlBlock parent) { super(duration, parent); }
+    public CPUInstruction(int duration) { super(duration); 
+      setBurstRemaining(this.getDuration());}
     
     /**
      * Obtain execution time required to complete this cpu burst.
+     
      */
+     
+     int getDuration(){
+         return this.getDuration();
+     }
+     
+     void setBurstRemaining(int time){
+         burstRemaining = time;
+     }
     int getBurstRemaining() { return burstRemaining; }
     
     /**

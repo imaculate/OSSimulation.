@@ -1,3 +1,4 @@
+import java.util.*;
 public class Process implements ProcessControlBlock{
 	
 /**
@@ -24,7 +25,7 @@ public class Process implements ProcessControlBlock{
    static int numOfProcesses;
 
 	public Process(int ID ){
-		this.ID = ID
+		this.ID = ID;
 		
 	}
    
@@ -32,7 +33,7 @@ public class Process implements ProcessControlBlock{
       this.name = name;
       this.ID = numOfProcesses++;
    }
-    int getPID(){
+    public int getID(){
 		return ID;
 	}
    
@@ -42,7 +43,7 @@ public class Process implements ProcessControlBlock{
      * Obtain program name.
      * 
      */
-    String getProgramName(){
+    public String getProgramName(){
 		return name;
 	}
     
@@ -50,8 +51,8 @@ public class Process implements ProcessControlBlock{
     /**
      * Obtain current program 'instruction'.
      */
-    Instruction getInstruction(){
-      return inst[processNumber];
+   public Instruction getInstruction(){
+      return inst.get(processNumber);
 		
 		
 	}
@@ -60,9 +61,9 @@ public class Process implements ProcessControlBlock{
     /**
      * Advance to next instruction.
      */
-    void nextInstruction(){
-      if(processNumber == inst.length-1){
-         this.state = STATE.TERMINATED;
+    public void nextInstruction(){
+      if(processNumber == inst.size()-1){
+         this.state = ProcessControlBlock.State.TERMINATED;
       }else{   
          processNumber++;
       }
@@ -72,7 +73,7 @@ public class Process implements ProcessControlBlock{
     /**
      * Obtain process state.
      */
-    State getState(){
+    public State getState(){
 		return state;
 	}
     
@@ -80,8 +81,8 @@ public class Process implements ProcessControlBlock{
      * Set process state.
      * Requires <code>getState()!=State.TERMINATED</code>.
      */
-    void setState(State state){
-		if(getState()!=State.TERMINATED){
+    public void setState(State state){
+		if(getState()!=ProcessControlBlock.State.TERMINATED){
 	
 			this.state = state;
 			}

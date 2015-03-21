@@ -6,6 +6,8 @@
  * @author Stephan Jamieson 
  * @version 8/3/2015
  */
+ 
+ import java.util.*;
 public class SystemTimerImpl  {
 
     /** 
@@ -28,6 +30,7 @@ public class SystemTimerImpl  {
      */
    long getIdleTime(){
       //calculate this.
+      return 0;
          }
 
     /**
@@ -81,7 +84,7 @@ public class SystemTimerImpl  {
      * Schedule a timer interrupt for <code>timeUnits</code> time units in the future 
      * for the given process.
      */
-   void scheduleInterrupt(int timeUnits, int processID){
+   void scheduleInterrupt(long timeUnits, int processID){
       Process p = getProcess(processID);
       Event t = new TimeOutEvent(timeUnits, p);
       Simulation.queue.add(t);
@@ -93,16 +96,8 @@ public class SystemTimerImpl  {
      */
    void cancelInterrupt(int processID){
       Process p = getProcess(processID);
-      Iterator<Event> i = Simulation.queue.iterator();
-      while(i.hasNext()){
-         Event e = i.next();
-         if((next.getClass()== TimeOutEvent.class) && (e.getProcess().getID == processID)){
-            Simulation.queue.remove(e);
-            break;
-         }
+      Simulation.queue.removeTimeOut(p);
             
-      }
-      
    
          
       
@@ -116,11 +111,11 @@ public class SystemTimerImpl  {
         
       while(i.hasNext()){
          Process next = i.next();
-         if(next.getID()==processID()){
+         if(next.getID()==id){
             return next;
          }
       }
-   
+      return null;
       
    }
 }

@@ -15,7 +15,7 @@ public interface ProcessControlBlock {
     /**
      * Obtain process ID.
      */
-    int getPID();
+    int getID();
 
     /**
      * Obtain program name.

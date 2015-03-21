@@ -5,19 +5,24 @@ public class CPUImpl implements CPU{
 	//the current process control block.
 
 
-   int execute(int timeUnits){
-      currP.setState(STATE.RUNNING);
+   public int execute(int timeUnits){
+      currP.setState(ProcessControlBlock.State.RUNNING);
    
-      int required = currP.getInstruction().getBurstRemaining();
+      int required = ((CPUInstruction)currP.getInstruction()).getBurstRemaining();
       int used = Math.min(required, timeUnits);
    
       Simulation.timer.advanceUserTime(used);
       if(required<= timeUnits){
-         return (timeUnits - required);
-         if(currP.processNumber == (currP.inst.size())){
-            Simulation.kernel.syscall(TERMINATE_PROCESS);
-         }
+         
+         if(((Process)currP).processNumber == (((Process)currP).inst.size())){
+            Simulation.kernel.syscall(Kernel.TERMINATE_PROCESS);
             
+         }else{
+            ((CPUInstruction)currP.getInstruction()).setBurstRemaining(required - timeUnits);
+            
+           
+         }
+          return (timeUnits - required);  
       }
       else{
          return 0;
@@ -32,22 +37,22 @@ public class CPUImpl implements CPU{
      * 
      * @return the previously executing process.
      */
-   ProcessControlBlock contextSwitch(ProcessControlBlock process){
+   public void contextSwitch(ProcessControlBlock process){
       currP = process;
    }
     
     /**
      * Obtain the PCB of the currently  executing process
      */
-   ProcessControlBlock currentProcess(){
+   public ProcessControlBlock getProcess(){
       return currP;
    }
 
     /**
      * Determine whether the CPU is idle (<code>currentProcess()==null</code>).
      */
-   boolean isIdle(){
-      return (currentProcess()==null); 
+   public boolean isIdle(){
+      return (getProcess()==null); 
    
    }
 }

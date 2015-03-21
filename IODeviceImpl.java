@@ -1,17 +1,18 @@
+import java.util.*;
 public class IODeviceImpl implements IODevice{
 	
 	int ID;
 	String name;
-	PriorityQueue<ProcessControlBlock> deviceQueue;
+	LinkedList<Process> deviceQueue;
 	
 	public IODeviceImpl(String name, int ID){
 		this.ID= ID;
 		this.name = name;
-		queue = new PriorityQueue<ProcessControlBlock>();
+		deviceQueue = new LinkedList<Process>();
 		
 	}
 
-    int getID(){
+    public int getID(){
 		return ID;
 			
 	}
@@ -20,7 +21,7 @@ public class IODeviceImpl implements IODevice{
     /**
      * Obtain the device type name.
      */
-    String getName(){
+    public String getName(){
 		return name;
 		
 	}
@@ -28,12 +29,12 @@ public class IODeviceImpl implements IODevice{
     /**
      * Obtain the time at which the device will have completed all its current requests.
      */
-    long getFreeTime(){
+    public long getFreeTime(){
       
-        Iterator<Process> i = queue.iterator();
-        long freeTime;
+        Iterator<Process> i = deviceQueue.iterator();
+        long freeTime = Simulation.timer.getSystemTime();
       while(i.hasNext()){
-         freeTime += i.next().getInstruction().getDuration();
+         freeTime += ((IOInstruction)i.next().getInstruction()).getDuration();
 
        }
       
@@ -44,8 +45,10 @@ public class IODeviceImpl implements IODevice{
     /**
      * Place the given process on the device queue.
      */
-    long requestIO(int duration, ProcessControlBlock process){
-      deviceQueue.add( process );
+    public long requestIO(int duration, ProcessControlBlock process){
+      
+      deviceQueue.add((Process)process);
+      return getFreeTime() +duration;//anticipated time of execution.
          
 
 	}

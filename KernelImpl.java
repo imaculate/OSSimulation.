@@ -1,5 +1,7 @@
 import java.util.*;
+import java.io.*;
 public class KernelImpl  implements Kernel{
+   private int switches;
 	//final static int MAKE_DEVICE = 1;
     
     /**
@@ -30,7 +32,7 @@ public class KernelImpl  implements Kernel{
          case MAKE_DEVICE:
             {	
                int deviceID = (Integer)varargs[0];
-               String deviceName  = (String)varagrs[1];
+               String deviceName  = (String)varargs[1];
                IODeviceImpl device = new IODeviceImpl(deviceName, deviceID);
             
                devices.add(device);
@@ -40,14 +42,40 @@ public class KernelImpl  implements Kernel{
          
          case EXECVE:
             {	
-               Simulation.timer.advanceTime(SYSCALL_COST);
-               Process p = new Process(varargs[0]);
-               p.setState(State.READY);
+               Simulation.timer.advanceKernelTime(SystemTimer.SYSCALL_COST);
+               Process p = new Process((String)varargs[0]);
+               p.setState(ProcessControlBlock.State.READY);
                File file;
                Scanner in;
                try{
-                  file = new File(varargs[0]);
+                  file = new File((String)varargs[0]);
                   in = new Scanner(file);
+                  
+                  String line;
+                  ArrayList<Instruction> inst = new ArrayList<Instruction>();
+               
+                  while(in.hasNextLine()){
+                     line = in.nextLine();
+                     String[] data = line.split(" ");
+                     if(data[0].charAt(0) != '#'){
+                        if(data[0].equals("CPU")){
+                           CPUInstruction c = new CPUInstruction(Integer.parseInt(data[1]));
+                           inst.add(c);
+                        }
+                        else if(data[0].equals("IO")){//io instruction
+                           IOInstruction i = new IOInstruction(Integer.parseInt(data[1]), Integer.parseInt(data[2]));//how to get device id
+                           inst.add(i);
+                        }
+                     
+                     }
+                     else{
+                        continue;
+                     }
+                  
+                  }
+                  p.inst = inst; 
+               
+                  Simulation.readyQueue.add(p);
                
                
                }
@@ -55,31 +83,7 @@ public class KernelImpl  implements Kernel{
                   e.printStackTrace();
                } 
             
-               String line;
-               ArrayList<Instruction> inst;
-            
-               while(in.hasNextLine()){
-                  line = in.nextLine();
-                  String[] data = data.split(" ");
-                  if(!data[0].charAt(0) == '#'){
-                     if(data[0].equals("CPU")){
-                        CPUInstruction c = new CPUInstruction(Integer.parseInt(data[1]), process);
-                        inst.add(c);
-                     }
-                     else if(data[0].equals("IO")){//io instruction
-                        IOInstruction i = new IOInstruction(Integer.parseInt(data[1]), process, Integer.parseInt(data[2]));//how to get device id
-                        inst.add(i);
-                     }
-                  
-                  }
-                  else{
-                     continue;
-                  }
                
-               }
-               process.inst = inst; 
-               
-               Simulation.readyqueue.add(process);
             
             
             
@@ -88,29 +92,30 @@ public class KernelImpl  implements Kernel{
          case IO_REQUEST:
             {	int device = (Integer)varargs[0];
                int duration = (Integer)varargs[1];
-               Simulation.timer.advanceTime(SYSCALL_COST);
+               Simulation.timer.advanceKernelTime(SystemTimer.SYSCALL_COST);
             
-               Process po = Simulation.cpu.currentProcess();
+               Process po = (Process)Simulation.cpu.getProcess();
                Simulation.timer.cancelInterrupt(po.getID());
             
-               Device d = getDevice(device);
+               IODevice d = getDevice(device);
             
-               de.requestIO(duration, po);
-               po.setState(State.TERMINATED);
+               d.requestIO(duration, po);
+               po.setState(ProcessControlBlock.State.TERMINATED);
             
-               interupt(WAKE_UP, po.getID());
+               interrupt(WAKE_UP, po.getID());
                Process next =null;
                if(!Simulation.readyQueue.isEmpty()){
-                  next = Simulation.readyqueue.peek();
+                  next = Simulation.readyQueue.peek();
                   Simulation.timer.advanceKernelTime(Simulation.overhead);
-                  int time = (d.getFreeTime() > Simuation.timer.getSystemTime() )? d.getFreeTime(): Simuation.timer.getSystemTime();
-                  Simulation.timer.scheduleInterrupt(time +next.getInstruction().getDuration() , next.getID());
+                  long time = (d.getFreeTime() > Simulation.timer.getSystemTime() )? d.getFreeTime(): Simulation.timer.getSystemTime();
+                  Simulation.timer.scheduleInterrupt(time +((CPUInstruction)next.getInstruction()).getBurstRemaining() , next.getID());
                
                
                }
             
                           
                Simulation.cpu.contextSwitch(next);
+               switches++;
                            
             //timer
             
@@ -121,20 +126,21 @@ public class KernelImpl  implements Kernel{
          
          
             {	
-               Simulation.timer.advanceTime(SYSCALL_COST);
-               Process po = Simulation.cpu.currentProcess();
-               Simulation.timer.cancelInterrupt(po.getID);
+               Simulation.timer.advanceKernelTime(SystemTimer.SYSCALL_COST);
+               Process po = (Process)(Simulation.cpu.getProcess());
+               Simulation.timer.cancelInterrupt(po.getID());
             
-               po.setState(State.TERMINATED);
+               po.setState(ProcessControlBlock.State.TERMINATED);
                Process next  = null;
                if(!Simulation.readyQueue.isEmpty()){
-                  next = Simulation.readyqueue.peek();
+                  next = Simulation.readyQueue.peek();
                   Simulation.timer.advanceKernelTime(Simulation.overhead);
-                  Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + next.getInstruction().getDuration() , next.getID());
+                  Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + ((CPUInstruction)next.getInstruction()).getDuration() , next.getID());
                
                }
             
                Simulation.cpu.contextSwitch(next);
+               switches++;
                
             
             
@@ -169,6 +175,7 @@ public class KernelImpl  implements Kernel{
          }
             
       }
+      return null;
          // assuming the device will always be found.
    }
    public void interrupt(int interruptType, Object... varargs){
@@ -176,23 +183,24 @@ public class KernelImpl  implements Kernel{
          case TIME_OUT:
             {
                int id = (Integer)varargs[0];
-               Process po = Simulation.cpu.currentProcess();
-               return id = po.getID();
+               Process po = (Process)(Simulation.cpu.getProcess());
+               //assert( id == po.getID());
                
                
-               po.setState(State.READY);
+               po.setState(ProcessControlBlock.State.READY);
                
                Process next = null;
                if(!Simulation.readyQueue.isEmpty()){
-                  next = Simulation.readyqueue.peek();
+                  next = Simulation.readyQueue.peek();
                   Simulation.timer.advanceKernelTime(Simulation.overhead);
-                  Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + next.getInstruction().getDuration() , next.getID());
+                  Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + ((CPUInstruction)next.getInstruction()).getDuration() , next.getID());
                
                
                }
                Simulation.cpu.contextSwitch(next);
+               switches++;
             
-               Simulation.readyqueue.add(po);
+               Simulation.readyQueue.add(po);
              
              
              
@@ -208,18 +216,18 @@ public class KernelImpl  implements Kernel{
                int device = (Integer)varargs[0];
                int process = (Integer)varargs[1];
             
-               IODevice d = getDevice(device);
+               IODeviceImpl d = (IODeviceImpl)getDevice(device);
                Process p = null;
-                  Iterator<Process> i = d.queue.iterator();
+               Iterator<Process> i = d.deviceQueue.iterator();
                while(i.hasNext()){
                   p = i.next();
-                  if(p.getID() = process){
-                     d.queue.remove(e);
+                  if(p.getID() == process){
+                     d.deviceQueue.remove(p);
                      break;
                   }
                }
-               
-               p.setState(State.READY);
+             
+               p.setState(ProcessControlBlock.State.READY);
             
                d.deviceQueue.remove(p);
             
@@ -230,5 +238,11 @@ public class KernelImpl  implements Kernel{
          
          
       }
+   }
+   
+   
+   
+   public int getContextSwiches(){
+      return switches;
    }
 }

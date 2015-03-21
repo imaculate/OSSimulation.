@@ -3,6 +3,21 @@ Author: Imaculate Mosha
 Date: 1st March 2015
 Name: A simple student database assignment.
 
++interupts
+
++system timer
+
++trace.
+
++when is CPU.execute 
+execute
+
++assert in KernelImpl
+
+change the linkedlists to queues.
+
++graphs 
++explanation+
 
 Description: 
 This assignment is written to in responce to answer assignment question to create a simple database using c++.

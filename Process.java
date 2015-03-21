@@ -19,15 +19,24 @@ public class Process implements ProcessControlBlock{
 	int ID;
 	String name;
 	State state;
+   ArrayList<Instruction> inst;
+   int processNumber;//index of current running instruction.
+   static int numOfProcesses;
 
-	public Process(int ID, String name ){
-		this.ID = ID; 
-		this.name = name;
+	public Process(int ID ){
+		this.ID = ID
 		
 	}
+   
+   public Process(String name){
+      this.name = name;
+      this.ID = numOfProcesses++;
+   }
     int getPID(){
 		return ID;
 	}
+   
+ 
 
     /**
      * Obtain program name.
@@ -42,6 +51,7 @@ public class Process implements ProcessControlBlock{
      * Obtain current program 'instruction'.
      */
     Instruction getInstruction(){
+      return inst[processNumber];
 		
 		
 	}
@@ -51,6 +61,11 @@ public class Process implements ProcessControlBlock{
      * Advance to next instruction.
      */
     void nextInstruction(){
+      if(processNumber == inst.length-1){
+         this.state = STATE.TERMINATED;
+      }else{   
+         processNumber++;
+      }
 		
 	}
     

@@ -22,5 +22,9 @@ public class IOInstruction extends Instruction {
      */
     public int getDeviceID() { return deviceID; }
     
+    public int getDuration(){
+      return duration;
+    }
+    
 
 }

@@ -2,7 +2,7 @@ public class IODeviceImpl implements IODevice{
 	
 	int ID;
 	String name;
-	PriorityQueue<ProcessControlBlock> queue;
+	PriorityQueue<ProcessControlBlock> deviceQueue;
 	
 	public IODeviceImpl(String name, int ID){
 		this.ID= ID;
@@ -29,7 +29,15 @@ public class IODeviceImpl implements IODevice{
      * Obtain the time at which the device will have completed all its current requests.
      */
     long getFreeTime(){
-		
+      
+        Iterator<Process> i = queue.iterator();
+        long freeTime;
+      while(i.hasNext()){
+         freeTime += i.next().getInstruction().getDuration();
+
+       }
+      
+		return freeTime;
 	
 	}
     
@@ -37,6 +45,8 @@ public class IODeviceImpl implements IODevice{
      * Place the given process on the device queue.
      */
     long requestIO(int duration, ProcessControlBlock process){
+      deviceQueue.add( process );
+         
 
 	}
 

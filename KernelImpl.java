@@ -28,6 +28,7 @@ public class KernelImpl  implements Kernel{
    ArrayList<IODevice> devices = new ArrayList<IODevice>();
    
    public int syscall(int number, Object... varargs){
+      String details = null;
       switch(number){
          case MAKE_DEVICE:
             {	
@@ -36,6 +37,8 @@ public class KernelImpl  implements Kernel{
                IODeviceImpl device = new IODeviceImpl(deviceName, deviceID);
             
                devices.add(device);
+               details=String.format("MAKE_DEVICE, %s,\"%s\"", varargs[0], varargs[1]);
+               break;
             		
             
             }
@@ -55,7 +58,9 @@ public class KernelImpl  implements Kernel{
                   ArrayList<Instruction> inst = new ArrayList<Instruction>();
                
                   while(in.hasNextLine()){
-                     line = in.nextLine();
+                                          line = in.nextLine();
+                                          //System.out.println(line);
+
                      String[] data = line.split(" ");
                      if(data[0].charAt(0) != '#'){
                         if(data[0].equals("CPU")){
@@ -74,18 +79,23 @@ public class KernelImpl  implements Kernel{
                   
                   }
                   p.inst = inst; 
+                   
+
                
-                  Simulation.readyQueue.add(p);
+                 Simulation.readyQueue.add(p);
+                 Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + ((CPUInstruction)p.getInstruction()).getBurstRemaining() , p.getID());
+                  System.out.println(Simulation.readyQueue.isEmpty());
                
                
                }
                catch(IOException e){
                   e.printStackTrace();
+                  System.out.println("Couldn't open class");
                } 
-            
+               details=String.format("EXECVE, \"%s\"", varargs[0]);
                
             
-            
+               break;
             
             }
          
@@ -118,7 +128,8 @@ public class KernelImpl  implements Kernel{
                switches++;
                            
             //timer
-            
+            details=String.format("IO_REQUEST, %s, %s", varargs[0], varargs[1]);
+               break;
             
             }
          
@@ -141,13 +152,18 @@ public class KernelImpl  implements Kernel{
             
                Simulation.cpu.contextSwitch(next);
                switches++;
+               details="TERMINATE_PROCESS";
+               break;
+            
                
-            
-            
             //timer
             
             }
+            
+            default:
+               details="ERROR_UNKNOWN_NUMBER";
       }
+      System.out.printf("Time: %010d SysCall(%s)\n", Simulation.timer.getSystemTime(), details);
       return 0;
    }
 
@@ -179,13 +195,14 @@ public class KernelImpl  implements Kernel{
          // assuming the device will always be found.
    }
    public void interrupt(int interruptType, Object... varargs){
+      String details = null;
       switch(interruptType){
          case TIME_OUT:
             {
                int id = (Integer)varargs[0];
                Process po = (Process)(Simulation.cpu.getProcess());
                //assert( id == po.getID());
-               
+              
                
                po.setState(ProcessControlBlock.State.READY);
                
@@ -199,8 +216,12 @@ public class KernelImpl  implements Kernel{
                }
                Simulation.cpu.contextSwitch(next);
                switches++;
-            
-               Simulation.readyQueue.add(po);
+                int remaining = Simulation.cpu.execute(Simulation.slicelength);
+                if(remaining==0){
+                  Simulation.readyQueue.add(po);
+               }
+               details=String.format("TIME_OUT, %s", varargs[0]);
+               break;
              
              
              
@@ -233,11 +254,17 @@ public class KernelImpl  implements Kernel{
             
                p.nextInstruction();
                Simulation.readyQueue.add(p);
+               details=String.format("WAKE_UP, %s, %s", varargs[0], varargs[1]);
+               break;
             }
+            
+            default:
+               details="ERROR_UNKNOWN_NUMBER";
          
          
          
       }
+      System.out.printf("Time: %010d Interrupt(%s)\n", Simulation.timer.getSystemTime(), details);
    }
    
    

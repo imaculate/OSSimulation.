@@ -18,9 +18,7 @@ public class CPUInstruction extends Instruction {
      
      */
      
-     int getDuration(){
-         return this.getDuration();
-     }
+    
      
      void setBurstRemaining(int time){
          burstRemaining = time;

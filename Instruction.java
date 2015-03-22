@@ -18,5 +18,9 @@ public abstract class Instruction {
         this.duration = duration;
     }
     
+    public int getDuration(){
+      return duration;
+    }
+    
     
 }

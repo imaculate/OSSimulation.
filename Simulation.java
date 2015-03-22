@@ -55,17 +55,28 @@ public class Simulation{
       
       
       
-      
-         do{
-            if(queue.poll().getTime() >= timer.getSystemTime()){
-               Event e = queue.peek();
+         
+         
+            
+            
+            do{
+              boolean time = (queue.peek().getTime()>= timer.getSystemTime());
+              System.out.println(queue.isEmpty());
+            while(time &&  !queue.isEmpty() ){
+               
+               Event e = queue.poll();
+              
+               
                if(e.getClass() == ExecveEvent.class){
                
                   kernel.syscall(2, ((ExecveEvent)e).getProgramName());
+                                System.out.println(queue.isEmpty());
                
                }
                else if(e.getClass() == TimeOutEvent.class){
-                  kernel.interrupt(Kernel.TIME_OUT,((TimeOutEvent)e).getProcess().getID());
+                  TimeOutEvent t = (TimeOutEvent)e;
+                  System.out.println(t.getProcess()==null);
+                  kernel.interrupt(Kernel.TIME_OUT,t.getProcess().getID());
                }
                else if(e.getClass() == WakeUpEvent.class){
                
@@ -74,10 +85,12 @@ public class Simulation{
                
                }
             
-            }  	  
+            }
+            if(cpu.isIdle() && queue.isEmpty()) break;
+            }while(true);  	  
          
          
-         }while(!queue.isEmpty() && !cpu.isIdle());
+         
       
       
          System.out.println("System Time:   "+ timer.getSystemTime());

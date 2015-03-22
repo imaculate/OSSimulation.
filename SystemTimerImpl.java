@@ -107,10 +107,13 @@ public class SystemTimerImpl  {
    }
    
    Process getProcess(int id){
+      System.out.println("chechk"+id);
+      System.out.println(Simulation.readyQueue.isEmpty());
       Iterator<Process> i = Simulation.readyQueue.iterator();
         
       while(i.hasNext()){
          Process next = i.next();
+         System.out.println(next.getID());
          if(next.getID()==id){
             return next;
          }

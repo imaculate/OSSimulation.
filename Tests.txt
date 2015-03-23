@@ -1,0 +1,96 @@
+A. TestOne: slice time 50, c.switch 2, single process, no i/o, start time 0, cpu burst 30.
+
+Time: 0000000000 SysCall(EXECVE, "TestOne/program1.prg")
+Time: 0000000000 Context Switch({Idle},{1, TestOne/program1.prg}).
+Time: 0000000004 Kernel exit
+Time: 0000000034 SysCall(TERMINATE_PROCESS)
+Time: 0000000034 Context Switch({1, TestOne/program1.prg},{Idle}).
+Time: 0000000038 Kernel exit
+System time: 38
+Kernel time: 8
+User time: 30
+Idle time: 0
+Context switches: 2
+CPU utilization: 78.95
+
+B. TestTwo: slice time 50, c. switch 2, single process, no i/0, start time 10, cpu burst 60.
+
+Note: the CPU burst exceeds the time slice, but because there is only one process, no context
+switch occurs. The process remains on the cpu and is allocated another slice.
+
+Time: 0000000010 SysCall(EXECVE, "TestTwo/program1.prg")
+Time: 0000000010 Context Switch({Idle},{1, TestTwo/program1.prg}).
+Time: 0000000014 Kernel exit
+Time: 0000000064 Interrupt(TIME_OUT, 1)
+Time: 0000000066 Kernel exit
+Time: 0000000076 SysCall(TERMINATE_PROCESS)
+Time: 0000000076 Context Switch({1, TestTwo/program1.prg},{Idle}).
+Time: 0000000080 Kernel exit
+System time: 80
+Kernel time: 10
+User time: 60
+Idle time: 10
+Context switches: 2
+CPU utilization: 75.00
+
+C. TestThree: slice time 50, c.switch 2, single process, start time 0, cpu burst 60, i/o 10, cpu burst 30.
+
+Note: as per the design specification, system time is set to zero (along with user time and kernel time) 
+once all devices have been created. There's a notion of parallelism in handling I/O requests, hence an idle
+time of 6, not 10.
+
+Time: 0000000000 SysCall(MAKE_DEVICE, 1,"DISK")
+Time: 0000000002 Kernel exit
+Time: 0000000000 SysCall(EXECVE, "TestThree/program1.prg")
+Time: 0000000000 Context Switch({Idle},{1, TestThree/program1.prg}).
+Time: 0000000004 Kernel exit
+Time: 0000000054 Interrupt(TIME_OUT, 1)
+Time: 0000000056 Kernel exit
+Time: 0000000066 SysCall(IO_REQUEST, 1, 10)
+Time: 0000000066 Context Switch({1, TestThree/program1.prg},{Idle}).
+Time: 0000000070 Kernel exit
+Time: 0000000076 Interrupt(WAKE_UP, 1, {1, TestThree/program1.prg})
+Time: 0000000076 Context Switch({Idle},{1, TestThree/program1.prg}).
+Time: 0000000080 Kernel exit
+Time: 0000000110 SysCall(TERMINATE_PROCESS)
+Time: 0000000110 Context Switch({1, TestThree/program1.prg},{Idle}).
+Time: 0000000114 Kernel exit
+System time: 114
+Kernel time: 18
+User time: 90
+Idle time: 6
+Context switches: 4
+CPU utilization: 78.95
+
+D. TestFour: slice time 50, c. switch 2, two processes, start time 0 for both, CPU 60 for one, CPU 70 for two.
+
+In this trace, both processes are scheduled for time zero. Program 1 goes first, and program 2 is actually
+loaded at time 4. The kernel steals 2 units from program 1's time slice to load program 2, meaning that 48
+units are allocated to it. This means that, the next time that program 1 is scheduled, 12 units are required 
+to complete its execution. 
+
+Time: 0000000000 SysCall(EXECVE, "TestFour/program1.prg")
+Time: 0000000000 Context Switch({Idle},{1, TestFour/program1.prg}).
+Time: 0000000004 Kernel exit
+Time: 0000000004 SysCall(EXECVE, "TestFour/program2.prg")
+Time: 0000000006 Kernel exit
+Time: 0000000054 Interrupt(TIME_OUT, 1)
+Time: 0000000054 Context Switch({1, TestFour/program1.prg},{2, TestFour/program2.prg}).
+Time: 0000000058 Kernel exit
+Time: 0000000108 Interrupt(TIME_OUT, 2)
+Time: 0000000108 Context Switch({2, TestFour/program2.prg},{1, TestFour/program1.prg}).
+Time: 0000000112 Kernel exit
+Time: 0000000124 SysCall(TERMINATE_PROCESS)
+Time: 0000000124 Context Switch({1, TestFour/program1.prg},{2, TestFour/program2.prg}).
+Time: 0000000128 Kernel exit
+Time: 0000000148 SysCall(TERMINATE_PROCESS)
+Time: 0000000148 Context Switch({2, TestFour/program2.prg},{Idle}).
+Time: 0000000152 Kernel exit
+System time: 152
+Kernel time: 22
+User time: 130
+Idle time: 0
+Context switches: 5
+CPU utilization: 85.53
+
+ Tests.zip

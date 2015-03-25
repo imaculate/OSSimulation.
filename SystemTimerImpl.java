@@ -30,7 +30,7 @@ public class SystemTimerImpl  {
      */
    long getIdleTime(){
       //calculate this.
-      return 0;
+      return systemTime - userTime - kernelTime;
          }
 
     /**
@@ -84,8 +84,9 @@ public class SystemTimerImpl  {
      * Schedule a timer interrupt for <code>timeUnits</code> time units in the future 
      * for the given process.
      */
-   void scheduleInterrupt(long timeUnits, int processID){
-      Process p = getProcess(processID);
+   void scheduleInterrupt(long timeUnits, Process p){
+      
+  
       Event t = new TimeOutEvent(timeUnits, p);
       Simulation.queue.add(t);
          
@@ -94,8 +95,8 @@ public class SystemTimerImpl  {
     /**
      * Cancel timer interrupt for the given process.
      */
-   void cancelInterrupt(int processID){
-      Process p = getProcess(processID);
+   void cancelInterrupt(Process p){
+      
       Simulation.queue.removeTimeOut(p);
             
    
@@ -106,19 +107,4 @@ public class SystemTimerImpl  {
       
    }
    
-   Process getProcess(int id){
-      System.out.println("chechk"+id);
-      System.out.println(Simulation.readyQueue.isEmpty());
-      Iterator<Process> i = Simulation.readyQueue.iterator();
-        
-      while(i.hasNext()){
-         Process next = i.next();
-         System.out.println(next.getID());
-         if(next.getID()==id){
-            return next;
-         }
-      }
-      return null;
-      
    }
-}

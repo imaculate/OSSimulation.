@@ -47,19 +47,20 @@ public class EventQueue {
      */
     public boolean isEmpty() { return queue.isEmpty(); }
     
-    public boolean removeTimeOut(Process p){
+    public void removeTimeOut(Process p){
       Iterator<Event> i = queue.iterator();
       while(i.hasNext()){
          Event e = i.next();
+         
          if((e.getClass()== TimeOutEvent.class) && (((Process)((TimeOutEvent)e).getProcess()).getID() == p.getID())){
-           queue.remove(e);
-           return true;
+           i.remove();
+          
             
          }
             
       }
 
     
-      return false;
+      
     }
 }

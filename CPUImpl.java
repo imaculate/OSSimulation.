@@ -1,31 +1,27 @@
 import java.util.*;
-public class CPUImpl implements CPU{
 
+public class CPUImpl implements CPU{
+      private int switches;
    ProcessControlBlock currP;
 	//the current process control block.
 
 
    public int execute(int timeUnits){
-      currP.setState(ProcessControlBlock.State.RUNNING);
+      
+       
+            
    
       int required = ((CPUInstruction)currP.getInstruction()).getBurstRemaining();
       int used = Math.min(required, timeUnits);
    
       Simulation.timer.advanceUserTime(used);
       if(required<= timeUnits){
-         
-         if(((Process)currP).processNumber == (((Process)currP).inst.size())){
-            Simulation.kernel.syscall(Kernel.TERMINATE_PROCESS);
-            
-         }else{
-            ((CPUInstruction)currP.getInstruction()).setBurstRemaining(required - timeUnits);
-            
-           
-         }
+      
           return (timeUnits - required);  
       }
       else{
-         return 0;
+          ((CPUInstruction)currP.getInstruction()).setBurstRemaining(required - timeUnits);
+                      return 0;
       }
       
    
@@ -37,8 +33,32 @@ public class CPUImpl implements CPU{
      * 
      * @return the previously executing process.
      */
+     
+       public int getContextSwiches(){
+      return switches;
+   }
+     
    public void contextSwitch(ProcessControlBlock process){
+      switches++;
+      String old = "", curr = "";
+      if(currP == null){
+            old = "{Idle}";
+      }else{
+         old =curr.toString();
+      }
+      if(process == null) {
+         curr = "{Idle}";
+       }else{
+         curr = process.toString();
+      }
+      
+      System.out.printf("Time: %010d ContextSwitch(%s)  (%s)\n", Simulation.timer.getSystemTime(), old, curr);
       currP = process;
+            Simulation.timer.advanceKernelTime(Simulation.overhead);
+              
+          //  Time: 0000000000 Context Switch({Idle},{1, TestOne/program1.prg}).
+
+      
    }
     
     /**

@@ -49,6 +49,8 @@ public class IODeviceImpl implements IODevice{
       
       deviceQueue.add((Process)process);
       return getFreeTime() +duration;//anticipated time of execution.
+      
+   
          
 
 	}

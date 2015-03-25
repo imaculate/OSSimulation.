@@ -1,7 +1,7 @@
 import java.util.*;
 import java.io.*;
 public class KernelImpl  implements Kernel{
-   private int switches;
+
 	//final static int MAKE_DEVICE = 1;
     
     /**
@@ -31,13 +31,14 @@ public class KernelImpl  implements Kernel{
       String details = null;
       switch(number){
          case MAKE_DEVICE:
-            {	
+            {	details=String.format("MAKE_DEVICE, %s,\"%s\"", varargs[0], varargs[1]);
                int deviceID = (Integer)varargs[0];
                String deviceName  = (String)varargs[1];
                IODeviceImpl device = new IODeviceImpl(deviceName, deviceID);
             
                devices.add(device);
-               details=String.format("MAKE_DEVICE, %s,\"%s\"", varargs[0], varargs[1]);
+              
+               System.out.printf("Time: %010d SysCall(%s)\n", Simulation.timer.getSystemTime(), details);
                break;
             		
             
@@ -45,7 +46,10 @@ public class KernelImpl  implements Kernel{
          
          case EXECVE:
             {	
-               Simulation.timer.advanceKernelTime(SystemTimer.SYSCALL_COST);
+               details=String.format("EXECVE, \"%s\"", varargs[0]);
+            
+               System.out.printf("Time: %010d SysCall(%s)\n", Simulation.timer.getSystemTime(), details);
+             
                Process p = new Process((String)varargs[0]);
                p.setState(ProcessControlBlock.State.READY);
                File file;
@@ -58,9 +62,9 @@ public class KernelImpl  implements Kernel{
                   ArrayList<Instruction> inst = new ArrayList<Instruction>();
                
                   while(in.hasNextLine()){
-                                          line = in.nextLine();
+                     line = in.nextLine();
                                           //System.out.println(line);
-
+                  
                      String[] data = line.split(" ");
                      if(data[0].charAt(0) != '#'){
                         if(data[0].equals("CPU")){
@@ -80,55 +84,67 @@ public class KernelImpl  implements Kernel{
                   }
                   p.inst = inst; 
                    
-
                
-                 Simulation.readyQueue.add(p);
-                 Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + ((CPUInstruction)p.getInstruction()).getBurstRemaining() , p.getID());
-                  System.out.println(Simulation.readyQueue.isEmpty());
                
+                  Simulation.readyQueue.add(p);
+                 
+                 
+                  Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + Simulation.slicelength , p);
+               
+                     if(Simulation.cpu.isIdle() && !Simulation.readyQueue.isEmpty()){
+                 
+                           Simulation.cpu.contextSwitch(Simulation.readyQueue.poll());
+                     }
                
                }
                catch(IOException e){
                   e.printStackTrace();
                   System.out.println("Couldn't open class");
                } 
-               details=String.format("EXECVE, \"%s\"", varargs[0]);
                
+               Simulation.timer.advanceKernelTime(SystemTimer.SYSCALL_COST);
             
                break;
             
             }
          
          case IO_REQUEST:
-            {	int device = (Integer)varargs[0];
+         
+            {
+               details=String.format("IO_REQUEST, %s, %s", varargs[0], varargs[1]);
+               System.out.printf("Time: %010d SysCall(%s)\n", Simulation.timer.getSystemTime(), details);
+               int device = (Integer)varargs[0];
                int duration = (Integer)varargs[1];
-               Simulation.timer.advanceKernelTime(SystemTimer.SYSCALL_COST);
-            
-               Process po = (Process)Simulation.cpu.getProcess();
-               Simulation.timer.cancelInterrupt(po.getID());
+             
+               Process po =(Process)varargs[2];
+               
+               
+               
             
                IODevice d = getDevice(device);
+               
             
                d.requestIO(duration, po);
-               po.setState(ProcessControlBlock.State.TERMINATED);
-            
-               interrupt(WAKE_UP, po.getID());
+               long time = Math.max(d.getFreeTime() , Simulation.timer.getSystemTime() );
+                  WakeUpEvent e = new WakeUpEvent(time + duration , d, po  );
+                  Simulation.queue.add(e);
+                 /*interrupt(WAKE_UP, po.getID());
                Process next =null;
                if(!Simulation.readyQueue.isEmpty()){
                   next = Simulation.readyQueue.peek();
                   Simulation.timer.advanceKernelTime(Simulation.overhead);
                   long time = (d.getFreeTime() > Simulation.timer.getSystemTime() )? d.getFreeTime(): Simulation.timer.getSystemTime();
-                  Simulation.timer.scheduleInterrupt(time +((CPUInstruction)next.getInstruction()).getBurstRemaining() , next.getID());
+                  Simulation.timer.scheduleInterrupt(time +Simulation.slicelength , next);
                
-               
-               }
+                  Simulation.cpu.contextSwitch(next);
+               }*/
             
                           
-               Simulation.cpu.contextSwitch(next);
-               switches++;
+              
+            
                            
             //timer
-            details=String.format("IO_REQUEST, %s, %s", varargs[0], varargs[1]);
+            
                break;
             
             }
@@ -136,23 +152,22 @@ public class KernelImpl  implements Kernel{
          case TERMINATE_PROCESS:
          
          
-            {	
-               Simulation.timer.advanceKernelTime(SystemTimer.SYSCALL_COST);
+            {
+               details="TERMINATE_PROCESS";	
+               System.out.printf("Time: %010d SysCall(%s)\n", Simulation.timer.getSystemTime(), details);
+       
                Process po = (Process)(Simulation.cpu.getProcess());
-               Simulation.timer.cancelInterrupt(po.getID());
+               Simulation.timer.cancelInterrupt(po);
             
                po.setState(ProcessControlBlock.State.TERMINATED);
-               Process next  = null;
+               /*Process next  = null;
                if(!Simulation.readyQueue.isEmpty()){
-                  next = Simulation.readyQueue.peek();
+                  next = Simulation.readyQueue.poll();
                   Simulation.timer.advanceKernelTime(Simulation.overhead);
-                  Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + ((CPUInstruction)next.getInstruction()).getDuration() , next.getID());
+                  Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + Simulation.slicelength , next.getID());
                
                }
-            
-               Simulation.cpu.contextSwitch(next);
-               switches++;
-               details="TERMINATE_PROCESS";
+               Simulation.cpu.contextSwitch(next);*/
                break;
             
                
@@ -160,10 +175,15 @@ public class KernelImpl  implements Kernel{
             
             }
             
-            default:
+         default:
+            {
                details="ERROR_UNKNOWN_NUMBER";
+               System.out.printf("Time: %010d SysCall(%s)\n", Simulation.timer.getSystemTime(), details);
+            }
       }
-      System.out.printf("Time: %010d SysCall(%s)\n", Simulation.timer.getSystemTime(), details);
+   
+   
+   
       return 0;
    }
 
@@ -199,28 +219,57 @@ public class KernelImpl  implements Kernel{
       switch(interruptType){
          case TIME_OUT:
             {
-               int id = (Integer)varargs[0];
-               Process po = (Process)(Simulation.cpu.getProcess());
-               //assert( id == po.getID());
-              
+               details=String.format("TIME_OUT, %s", varargs[0]);
+               System.out.printf("Time: %010d Interrupt(%s)\n", Simulation.timer.getSystemTime(), details);
+                Simulation.timer.advanceKernelTime(SystemTimer.SYSCALL_COST);
+               Process po = (Process)varargs[0];
+             
+               if(Simulation.cpu.getProcess()==null){
+                  Simulation.cpu.currP = po;
+               }
+            
+               int rem =  Simulation.cpu.execute(Simulation.slicelength);
+               if(rem>0){
+                  //next event is IO
+                  
+                  po.nextInstruction();
+                  if(po.processNumber == po.inst.size()){
+                     syscall(Kernel.TERMINATE_PROCESS);
+                  
+                  }
+                  else{
+                     syscall(IO_REQUEST, ((IOInstruction)po.getInstruction()).getDeviceID(), po.getInstruction().getDuration(),po);
+                                          
+                  
+                  
+                  }
+               }else{
+                  Simulation.readyQueue.add(po);
+                   Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + Simulation.slicelength , po);
+                   
+                  
+               }
+                  
+                
                
-               po.setState(ProcessControlBlock.State.READY);
+            
+               //po.setState(ProcessControlBlock.State.READY);
                
                Process next = null;
                if(!Simulation.readyQueue.isEmpty()){
-                  next = Simulation.readyQueue.peek();
+                 
+                  next = Simulation.readyQueue.poll();
+                  if(!next.equals(po)){
+                    
                   Simulation.timer.advanceKernelTime(Simulation.overhead);
-                  Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + ((CPUInstruction)next.getInstruction()).getDuration() , next.getID());
-               
+                  Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + Simulation.slicelength , next);
+                  }else{
+                     next = null;
+                  }
                
                }
-               Simulation.cpu.contextSwitch(next);
-               switches++;
-                int remaining = Simulation.cpu.execute(Simulation.slicelength);
-                if(remaining==0){
-                  Simulation.readyQueue.add(po);
-               }
-               details=String.format("TIME_OUT, %s", varargs[0]);
+                  Simulation.cpu.contextSwitch(next);
+                   
                break;
              
              
@@ -234,42 +283,52 @@ public class KernelImpl  implements Kernel{
             }
          case WAKE_UP:
             {
-               int device = (Integer)varargs[0];
-               int process = (Integer)varargs[1];
-            
-               IODeviceImpl d = (IODeviceImpl)getDevice(device);
-               Process p = null;
-               Iterator<Process> i = d.deviceQueue.iterator();
-               while(i.hasNext()){
-                  p = i.next();
-                  if(p.getID() == process){
-                     d.deviceQueue.remove(p);
-                     break;
-                  }
-               }
-             
-               p.setState(ProcessControlBlock.State.READY);
-            
-               d.deviceQueue.remove(p);
-            
-               p.nextInstruction();
-               Simulation.readyQueue.add(p);
+                Simulation.timer.advanceKernelTime(SystemTimer.SYSCALL_COST);
                details=String.format("WAKE_UP, %s, %s", varargs[0], varargs[1]);
+               System.out.printf("Time: %010d Interrupt(%s)\n", Simulation.timer.getSystemTime(), details);
+               int device = (Integer)varargs[0];
+               Process process = (Process)varargs[1];
+                               IODeviceImpl d = (IODeviceImpl)getDevice(device);
+              
+               
+                     d.deviceQueue.remove(process);
+                 
+             
+               process.setState(ProcessControlBlock.State.READY);
+            
+              
+            
+               process.nextInstruction();
+               Simulation.readyQueue.add(process);
+        
+               Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + Simulation.slicelength , process);
+
+
+                Process next = null;
+               if(!Simulation.readyQueue.isEmpty()){
+                  next = Simulation.readyQueue.poll();
+                 
+                  Simulation.timer.advanceKernelTime(Simulation.overhead);
+                  Simulation.timer.scheduleInterrupt(Simulation.timer.getSystemTime() + Simulation.slicelength , next);
+                
+               
+               }
+                 Simulation.cpu.contextSwitch(next);
+
                break;
             }
             
-            default:
-               details="ERROR_UNKNOWN_NUMBER";
+         default:
+            details="ERROR_UNKNOWN_NUMBER";
+            System.out.println(details);
          
          
          
       }
-      System.out.printf("Time: %010d Interrupt(%s)\n", Simulation.timer.getSystemTime(), details);
+   
    }
    
    
    
-   public int getContextSwiches(){
-      return switches;
-   }
+ 
 }

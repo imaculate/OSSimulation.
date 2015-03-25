@@ -32,7 +32,7 @@ public class Process implements ProcessControlBlock{
    public Process(String name){
       this.name = name;
       this.ID = numOfProcesses++;
-      System.out.println("pid" +ID);
+   
       
    }
    public int getID(){
@@ -64,12 +64,9 @@ public class Process implements ProcessControlBlock{
      * Advance to next instruction.
      */
    public void nextInstruction(){
-      if(processNumber == inst.size()-1){
-         this.state = ProcessControlBlock.State.TERMINATED;
-      }
-      else{   
+       
          processNumber++;
-      }
+      
    	
    }
     

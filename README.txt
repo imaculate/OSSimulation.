@@ -1,42 +1,35 @@
 Author: Imaculate Mosha
 
-Date: 1st March 2015
-Name: A simple student database assignment.
+Date: 24th March 2015
+Name: An Operating System Simulator.
 
-+interupts
 
-+system timer
 
-+trace.
 
-+when is CPU.execute 
-execute
 
-+assert in KernelImpl
-
-change the linkedlists to queues.
-
-+graphs 
-+explanation+
 
 Description: 
-This assignment is written to in responce to answer assignment question to create a simple database using c++.
-It prompts the user for data which will be inserted into a vector of student objects. When the user chooses to save 
-to database from the menu , the values from the vector are saved to a text file (database.txt). One assumption has been 
-made that the records entered are not too many that they can all fit into a vector.  
+This assignment is written to in responce to answer assignment question to create a program that simulates an operating 
+system. It has a CPU, Kernel , Timer and IO Devices as explained in the instructions. 
 
 
-Instructions: Extract the tar file. Navigate to the destination folder from the command line. Enter make run. 
-	A menu of options appears, select 1 to enter add entry to database, 2 to read from databse , 3. to save to database,
-   4. to display a students data and 5. to grade a student. 
-	 
+Instructions: Extract/unzip the compressed file. 
+               Navigate to the destination folder from the command line.
+               Compile with the command make. 
+                  
+               Run Simulation [configfilename] [slicelength] [contextswitchingoverhead]
 
 List of files: 
 
-functions.h -header file for functions.cpp
-functions.cpp -file containing functions called by the driver.
-program.cpp -driver file for the program
-student.h -header file for student struct
-Makefile - used to run the program.
+All the files given for the assignment , in addition to the following:
+1. KernelImpl.java - implements kernel interface
+2. CPUImpl.java - implements CPU interface
+3. SystemTimerImpl.java - implments SystemTimer interface
+4. IODeviceImpl.java - implements IODevice interface.
+5. Simulation.java - driver for the program.
+6. Process.java -implements the ProcessControlBlock interface
 
+
+Explanation:
+The Simulator works on the test cases as required by the assignment.
 

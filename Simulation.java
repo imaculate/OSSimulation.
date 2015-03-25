@@ -41,7 +41,7 @@ public class Simulation{
             
                queue.add(event);
             }
-            else if(pdata[0].equals("I/O")){
+            else if(pdata[0].equals("DEVICE")){
                kernel.syscall( Kernel.MAKE_DEVICE, Integer.parseInt(pdata[1]) ,pdata[2]);
             
             
@@ -59,35 +59,43 @@ public class Simulation{
          
             
             
-            do{
-              boolean time = (queue.peek().getTime()>= timer.getSystemTime());
-              System.out.println(queue.isEmpty());
-            while(time &&  !queue.isEmpty() ){
+         
+          
+           //(queue.peek().getTime()>= timer.getSystemTime()) 
+            while(  !queue.isEmpty() ){
                
                Event e = queue.poll();
               
                
                if(e.getClass() == ExecveEvent.class){
-               
+                  if(timer.getSystemTime() < e.getTime()){
+                     timer.setSystemTime(e.getTime());
+                  }
+                  
                   kernel.syscall(2, ((ExecveEvent)e).getProgramName());
-                                System.out.println(queue.isEmpty());
+                  
                
                }
                else if(e.getClass() == TimeOutEvent.class){
                   TimeOutEvent t = (TimeOutEvent)e;
-                  System.out.println(t.getProcess()==null);
-                  kernel.interrupt(Kernel.TIME_OUT,t.getProcess().getID());
+                
+                
+                  kernel.interrupt(Kernel.TIME_OUT,t.getProcess());
                }
                else if(e.getClass() == WakeUpEvent.class){
-               
+                 
                   WakeUpEvent w = (WakeUpEvent)e;
-                  kernel.interrupt(Kernel.WAKE_UP, w.getDevice().getID(), w.getProcess().getID());
+                  kernel.interrupt(Kernel.WAKE_UP, w.getDevice().getID(), w.getProcess());
                
                }
+               
+                          
+              
+               
+            
             
             }
-            if(cpu.isIdle() && queue.isEmpty()) break;
-            }while(true);  	  
+          	  
          
          
          
@@ -98,7 +106,7 @@ public class Simulation{
          System.out.println("User Time:     "+ timer.getUserTime());
          System.out.println("CPU Idle Time: " + timer.getIdleTime());
       
-         System.out.println("Context Switches: " + kernel.getContextSwiches());
+         System.out.println("Context Switches: " + cpu.getContextSwiches());
          double util = (1.0*timer.getUserTime())/timer.getSystemTime();
          
          System.out.println("CPU Utilization :" + util*100);
